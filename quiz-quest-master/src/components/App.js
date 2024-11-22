@@ -12,6 +12,7 @@ import Footer from "./Footer";
 import Timer from "./Timer";
 
 const SECS_PER_QUESTION = 30;
+
 const initialState = {
   questions: [],
   // 'loading', 'error', 'ready', 'active', 'finished'
@@ -28,10 +29,7 @@ function reducer(state, action) {
     case "dataReceived":
       return { ...state, questions: action.payload, status: "ready" };
     case "dataFailed":
-      return {
-        ...state,
-        status: "error",
-      };
+      return { ...state, status: "error" };
     case "start":
       return {
         ...state,
@@ -59,21 +57,12 @@ function reducer(state, action) {
       };
     case "restart":
       return { ...initialState, questions: state.questions, status: "ready" };
-    // return {
-    //   ...state,
-    //   points: 0,
-    //   highscore: 0,
-    //   index: 0,
-    //   answer: null,
-    //   status: "ready",
-    // };
     case "tick":
       return {
         ...state,
         secondsRemaining: state.secondsRemaining - 1,
         status: state.secondsRemaining === 0 ? "finished" : state.status,
       };
-
     default:
       throw new Error("Action is Unknown");
   }
@@ -86,25 +75,38 @@ export default function App() {
   ] = useReducer(reducer, initialState);
 
   const numQuestions = questions.length;
-  const maxPossiblePoints = questions.reduce(
-    (prev, cur) => prev + cur.points,
-    0
-  );
 
-  useEffect(function () {
-    fetch("http://localhost:9000/questions")
-      .then((res) => res.json())
-      .then((data) => dispatch({ type: "dataReceived", payload: data }))
-      .catch((err) => dispatch({ type: "dataFailed" }));
+  // Ensure reduce doesn't throw errors if questions is empty
+  const maxPossiblePoints = questions.length
+    ? questions.reduce((prev, cur) => prev + cur.points, 0)
+    : 0;
+
+  useEffect(() => {
+    fetch("/.netlify/functions/questions")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch");
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Raw Fetched Data:", data); // Log raw response
+        if (Array.isArray(data)) {
+          dispatch({ type: "dataReceived", payload: data });
+        } else {
+          throw new Error("Invalid data format"); // Fails if not an array
+        }
+      })
+      .catch((err) => {
+        console.error("Error Fetching Questions:", err); // Log error
+        dispatch({ type: "dataFailed" });
+      });
   }, []);
-
   return (
     <div className="app">
       <Header />
       <Main>
         {status === "loading" && <Loader />}
         {status === "error" && <Error />}
-        {status === "ready" && (
+        {status === "ready" && numQuestions > 0 && (
           <StartScreen numQuestions={numQuestions} dispatch={dispatch} />
         )}
         {status === "active" && (
