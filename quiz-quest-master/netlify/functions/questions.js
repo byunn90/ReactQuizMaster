@@ -1,10 +1,10 @@
-const data = require("../../data/questions.json"); // Path to your JSON file
+const data = require("../../data/questions.json");
 
 exports.handler = async (event, context) => {
   try {
     return {
       statusCode: 200,
-      body: JSON.stringify(data.questions), // Return only the questions array
+      body: JSON.stringify(data.questions),
     };
   } catch (error) {
     return {

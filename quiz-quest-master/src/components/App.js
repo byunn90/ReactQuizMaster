@@ -76,7 +76,6 @@ export default function App() {
 
   const numQuestions = questions.length;
 
-  // Ensure reduce doesn't throw errors if questions is empty
   const maxPossiblePoints = questions.length
     ? questions.reduce((prev, cur) => prev + cur.points, 0)
     : 0;
@@ -88,15 +87,15 @@ export default function App() {
         return res.json();
       })
       .then((data) => {
-        console.log("Raw Fetched Data:", data); // Log raw response
+        console.log("Raw Fetched Data:", data);
         if (Array.isArray(data)) {
           dispatch({ type: "dataReceived", payload: data });
         } else {
-          throw new Error("Invalid data format"); // Fails if not an array
+          throw new Error("Invalid data format");
         }
       })
       .catch((err) => {
-        console.error("Error Fetching Questions:", err); // Log error
+        console.error("Error Fetching Questions:", err);
         dispatch({ type: "dataFailed" });
       });
   }, []);
